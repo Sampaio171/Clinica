@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistema Odonto | Fichas de Pacientes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-content">
+        <h1>Siemaco cor</h1>
+        <p>Gestão moderna de fichas de pacientes odontológicos com painel interativo, buscas rápidas e controle visual.</p>
+      </div>
+      <div class="hero-cards">
+        <article class="summary-card">
+          <span>Fichas salvas</span>
+          <strong id="record-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Resultados visíveis</span>
+          <strong id="filtered-count">0</strong>
+        </article>
+        <article class="summary-card">
+          <span>Última ficha</span>
+          <strong id="last-added">Nenhuma</strong>
+        </article>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="tab-bar">
+        <button id="tab-form" class="tab-button active">Nova ficha</button>
+        <button id="tab-list" class="tab-button">Fichas</button>
+      </div>
+
+      <section id="form-section" class="card form-card active-tab">
+        <div class="card-heading">
+          <h2>Adicionar Ficha do Paciente</h2>
+          <p>Preencha os dados abaixo para registrar uma ficha completa do paciente.</p>
+        </div>
+        <form id="protocol-form">
+          <label for="protocol-name">Motivo / Procedimento</label>
+          <input type="text" id="protocol-name" name="protocol-name" placeholder="Ex: Limpeza, Extração" required />
+
+          <label for="client-name">Nome do Paciente</label>
+          <input type="text" id="client-name" name="client-name" placeholder="Ex: João Silva" required />
+
+          <label for="client-cpf">CPF do Paciente</label>
+          <input type="text" id="client-cpf" name="client-cpf" placeholder="000.000.000-00" required />
+
+          <label for="client-phone">Telefone</label>
+          <input type="tel" id="client-phone" name="client-phone" placeholder="(00) 00000-0000" required />
+
+          <label for="client-dob">Data de Nascimento</label>
+          <input type="date" id="client-dob" name="client-dob" required />
+
+          <label for="client-plan">Plano / Convênio</label>
+          <input type="text" id="client-plan" name="client-plan" placeholder="Ex: Particular, Unimed" />
+
+          <label for="protocol-description">Observações</label>
+          <textarea id="protocol-description" name="protocol-description" rows="4" placeholder="Descreva o atendimento ou histórico" required></textarea>
+
+          <label for="protocol-steps">Anotações extras</label>
+          <textarea id="protocol-steps" name="protocol-steps" rows="3" placeholder="Observações adicionais, orientações ou recomendações" required></textarea>
+
+          <button type="submit">Salvar Ficha</button>
+        </form>
+      </section>
+
+      <section id="list-section" class="card list-card">
+        <div class="section-header">
+          <div>
+            <h2>Fichas de Pacientes</h2>
+            <p>Encontre e administre fichas cadastradas com filtros rápidos.</p>
+          </div>
+          <button id="clear-protocols" class="secondary">Limpar todos</button>
+        </div>
+        <div class="search-row">
+          <input type="search" id="search-input" placeholder="Buscar por paciente, CPF, telefone, plano ou procedimento" />
+        </div>
+        <div id="protocol-list" class="protocol-list"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Desenvolvido para gest&atilde;o de fichas de pacientes odontol&oacute;gicos.</p>
+    </footer>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Suas credenciais do projeto "Clinica fichas"
+    const firebaseConfig = {
+      apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
+      authDomain: "clinica-fichas.firebaseapp.com",
+      projectId: "clinica-fichas",
+      storageBucket: "clinica-fichas.firebasestorage.app",
+      messagingSenderId: "218967082965",
+      appId: "1:218967082965:web:daac1175e1d4fa92159f5c",
+      measurementId: "G-5QLMMYXTM8"
+    };
+
+    // Inicializa o Firebase e o Banco de Dados
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Seleciona o seu formulário pelo ID que já está no seu HTML
+    const formulario = document.getElementById('protocol-form');
+
+    if (formulario) {
+      formulario.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Não deixa a página recarregar
+
+        // Pega os dados usando os IDs exatos do seu formulário
+        const dadosPaciente = {
+          procedimento: document.getElementById('protocol-name').value,
+          nome: document.getElementById('client-name').value,
+          cpf: document.getElementById('client-cpf').value,
+          telefone: document.getElementById('client-phone').value,
+          dataNascimento: document.getElementById('client-dob').value,
+          plano: document.getElementById('client-plan').value,
+          observacoes: document.getElementById('protocol-description').value,
+          anotacoesExtras: document.getElementById('protocol-steps').value,
+          dataRegistro: new Date().toLocaleString('pt-BR')
+        };
+
+        try {
+          // Salva na coleção "fichas" no Firebase
+          const docRef = await addDoc(collection(db, "fichas"), dadosPaciente);
+          
+          alert("✅ Ficha de " + dadosPaciente.nome + " salva com sucesso!");
+          
+          // Limpa o formulário após salvar
+          formulario.reset();
+          
+        } catch (error) {
+          console.error("Erro ao salvar no Firebase:", error);
+          alert("❌ Erro ao salvar ficha. Verifique se o banco está em 'Modo de Teste'.");
+        }
+      });
+    }
+  </script>
+
+  <script src="app.js"></script>
+  </body>
+</html>
