@@ -84,65 +84,131 @@
     </main>
 
     <footer class="footer">
-      <p>Desenvolvido para gest&atilde;o de fichas de pacientes odontol&oacute;gicos.</p>
+      <p>Desenvolvido para gestão de fichas de pacientes odontológicos.</p>
     </footer>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Suas credenciais do projeto "Clinica fichas"
-    const firebaseConfig = {
-      apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
-      authDomain: "clinica-fichas.firebaseapp.com",
-      projectId: "clinica-fichas",
-      storageBucket: "clinica-fichas.firebasestorage.app",
-      messagingSenderId: "218967082965",
-      appId: "1:218967082965:web:daac1175e1d4fa92159f5c",
-      measurementId: "G-5QLMMYXTM8"
-    };
+      // Credenciais do projeto
+      const firebaseConfig = {
+        apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
+        authDomain: "clinica-fichas.firebaseapp.com",
+        projectId: "clinica-fichas",
+        storageBucket: "clinica-fichas.firebasestorage.app",
+        messagingSenderId: "218967082965",
+        appId: "1:218967082965:web:daac1175e1d4fa92159f5c",
+        measurementId: "G-5QLMMYXTM8"
+      };
 
-    // Inicializa o Firebase e o Banco de Dados
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
 
-    // Seleciona o seu formulário pelo ID que já está no seu HTML
-    const formulario = document.getElementById('protocol-form');
+      // --- 1. SALVAR FICHA ---
+      const formulario = document.getElementById('protocol-form');
+      if (formulario) {
+        formulario.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const dadosPaciente = {
+            procedimento: document.getElementById('protocol-name').value,
+            nome: document.getElementById('client-name').value,
+            cpf: document.getElementById('client-cpf').value,
+            telefone: document.getElementById('client-phone').value,
+            dataNascimento: document.getElementById('client-dob').value,
+            plano: document.getElementById('client-plan').value,
+            observacoes: document.getElementById('protocol-description').value,
+            anotacoesExtras: document.getElementById('protocol-steps').value,
+            dataRegistro: new Date() // Objeto Date para ordenação precisa
+          };
 
-    if (formulario) {
-      formulario.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Não deixa a página recarregar
+          try {
+            await addDoc(collection(db, "fichas"), dadosPaciente);
+            alert("✅ Ficha de " + dadosPaciente.nome + " salva com sucesso!");
+            formulario.reset();
+          } catch (error) {
+            console.error("Erro ao salvar:", error);
+            alert("❌ Erro ao salvar ficha.");
+          }
+        });
+      }
 
-        // Pega os dados usando os IDs exatos do seu formulário
-        const dadosPaciente = {
-          procedimento: document.getElementById('protocol-name').value,
-          nome: document.getElementById('client-name').value,
-          cpf: document.getElementById('client-cpf').value,
-          telefone: document.getElementById('client-phone').value,
-          dataNascimento: document.getElementById('client-dob').value,
-          plano: document.getElementById('client-plan').value,
-          observacoes: document.getElementById('protocol-description').value,
-          anotacoesExtras: document.getElementById('protocol-steps').value,
-          dataRegistro: new Date().toLocaleString('pt-BR')
-        };
+      // --- 2. LISTAR FICHAS E EXCLUIR ---
+      const listaFichas = document.getElementById('protocol-list');
+      const contadorFichas = document.getElementById('record-count');
 
-        try {
-          // Salva na coleção "fichas" no Firebase
-          const docRef = await addDoc(collection(db, "fichas"), dadosPaciente);
+      // Busca as fichas ordenadas pela data mais recente
+      const q = query(collection(db, "fichas"), orderBy("dataRegistro", "desc"));
+
+      onSnapshot(q, (snapshot) => {
+        listaFichas.innerHTML = "";
+        let total = 0;
+
+        snapshot.forEach((docSnapshot) => {
+          const ficha = docSnapshot.data();
+          const id = docSnapshot.id;
+          total++;
           
-          alert("✅ Ficha de " + dadosPaciente.nome + " salva com sucesso!");
-          
-          // Limpa o formulário após salvar
-          formulario.reset();
-          
-        } catch (error) {
-          console.error("Erro ao salvar no Firebase:", error);
-          alert("❌ Erro ao salvar ficha. Verifique se o banco está em 'Modo de Teste'.");
-        }
+          const dataFormatada = ficha.dataRegistro?.toDate ? 
+                                ficha.dataRegistro.toDate().toLocaleString('pt-BR') : "Data indefinida";
+
+          const item = document.createElement('div');
+          item.className = 'protocol-item card';
+          item.innerHTML = `
+            <div class="protocol-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong>${ficha.nome}</strong><br>
+                <small style="color: #666;">${dataFormatada}</small>
+              </div>
+              <button class="delete-btn" data-id="${id}" style="background: #ff4d4d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Excluir</button>
+            </div>
+            <p style="margin: 10px 0;"><strong>Procedimento:</strong> ${ficha.procedimento}</p>
+            <p><strong>CPF:</strong> ${ficha.cpf} | <strong>Tel:</strong> ${ficha.telefone}</p>
+            <p><strong>Plano:</strong> ${ficha.plano || 'Nenhum'}</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+            <p><small><strong>Observações:</strong> ${ficha.observacoes}</small></p>
+          `;
+          listaFichas.appendChild(item);
+        });
+
+        if(contadorFichas) contadorFichas.innerText = total;
+
+        // Configura os botões de excluir após carregar a lista
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.onclick = async (e) => {
+            const idParaDeletar = e.target.getAttribute('data-id');
+            if(confirm("Deseja realmente excluir esta ficha?")) {
+              try {
+                await deleteDoc(doc(db, "fichas", idParaDeletar));
+              } catch (error) {
+                alert("Erro ao excluir ficha.");
+              }
+            }
+          };
+        });
       });
-    }
-  </script>
 
-  <script src="app.js"></script>
+      // --- 3. BOTÃO LIMPAR TUDO ---
+      const btnLimparTudo = document.getElementById('clear-protocols');
+      if(btnLimparTudo) {
+        btnLimparTudo.onclick = async () => {
+          if(confirm("⚠️ ATENÇÃO: Isso apagará TODAS as fichas permanentemente. Continuar?")) {
+            try {
+              const querySnapshot = await getDocs(collection(db, "fichas"));
+              const batch = writeBatch(db);
+              querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+              });
+              await batch.commit();
+              alert("Banco de dados limpo com sucesso!");
+            } catch (error) {
+              alert("Erro ao limpar banco.");
+            }
+          }
+        };
+      }
+    </script>
+
+    <script src="app.js"></script>
   </body>
 </html>
