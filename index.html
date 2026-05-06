@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sistema Odonto | Fichas de Pacientes</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Esconde o conteúdo até a senha ser digitada */
+      body { display: none; }
+    </style>
   </head>
   <body>
     <header class="hero">
@@ -27,6 +31,7 @@
         </article>
       </div>
     </header>
+
     <main class="container">
       <div class="tab-bar">
         <button id="tab-form" class="tab-button active">Nova ficha</button>
@@ -90,6 +95,18 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
       import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+      // --- 1. CONTROLE DE ACESSO ---
+      const SENHA_CORRETA = "admin2029";
+      const senhaInformada = prompt("🔒 Acesso Restrito. Digite a senha da clínica:");
+
+      if (senhaInformada === SENHA_CORRETA) {
+        document.body.style.display = "block"; // Libera o site
+      } else {
+        alert("Senha incorreta!");
+        window.location.reload(); // Recarrega para pedir de novo
+      }
+
+      // --- CONFIGURAÇÃO FIREBASE ---
       const firebaseConfig = {
         apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
         authDomain: "clinica-fichas.firebaseapp.com",
@@ -103,7 +120,9 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-      
+      let todasAsFichas = []; // Cache local para busca instantânea
+
+      // --- 2. SALVAR FICHA ---
       const formulario = document.getElementById('protocol-form');
       if (formulario) {
         formulario.addEventListener('submit', async (e) => {
@@ -117,7 +136,7 @@
             plano: document.getElementById('client-plan').value,
             observacoes: document.getElementById('protocol-description').value,
             anotacoesExtras: document.getElementById('protocol-steps').value,
-            dataRegistro: new Date() // Objeto Date para ordenação precisa
+            dataRegistro: new Date()
           };
 
           try {
@@ -125,88 +144,93 @@
             alert("✅ Ficha de " + dadosPaciente.nome + " salva com sucesso!");
             formulario.reset();
           } catch (error) {
-            console.error("Erro ao salvar:", error);
             alert("❌ Erro ao salvar ficha.");
           }
         });
       }
 
-      // --- 2. LISTAR FICHAS E EXCLUIR ---
+      // --- 3. LISTAR E FILTRAR EM TEMPO REAL ---
       const listaFichas = document.getElementById('protocol-list');
-      const contadorFichas = document.getElementById('record-count');
+      const contadorTotal = document.getElementById('record-count');
+      const contadorFiltrado = document.getElementById('filtered-count');
+      const inputBusca = document.getElementById('search-input');
 
-      // Busca as fichas ordenadas pela data mais recente
       const q = query(collection(db, "fichas"), orderBy("dataRegistro", "desc"));
 
       onSnapshot(q, (snapshot) => {
+        todasAsFichas = [];
+        snapshot.forEach((doc) => {
+          todasAsFichas.push({ id: doc.id, ...doc.data() });
+        });
+        renderizarFichas(todasAsFichas);
+      });
+
+      function renderizarFichas(fichasParaMostrar) {
         listaFichas.innerHTML = "";
-        let total = 0;
-
-        snapshot.forEach((docSnapshot) => {
-          const ficha = docSnapshot.data();
-          const id = docSnapshot.id;
-          total++;
+        fichasParaMostrar.forEach((ficha) => {
+          const data = ficha.dataRegistro?.toDate ? ficha.dataRegistro.toDate().toLocaleString('pt-BR') : "";
           
-          const dataFormatada = ficha.dataRegistro?.toDate ? 
-                                ficha.dataRegistro.toDate().toLocaleString('pt-BR') : "Data indefinida";
-
           const item = document.createElement('div');
           item.className = 'protocol-item card';
           item.innerHTML = `
-            <div class="protocol-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="protocol-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
               <div>
                 <strong>${ficha.nome}</strong><br>
-                <small style="color: #666;">${dataFormatada}</small>
+                <small style="color: #666;">${data}</small>
               </div>
-              <button class="delete-btn" data-id="${id}" style="background: #ff4d4d; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Excluir</button>
+              <button class="delete-btn" data-id="${ficha.id}" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
             </div>
-            <p style="margin: 10px 0;"><strong>Procedimento:</strong> ${ficha.procedimento}</p>
-            <p><strong>CPF:</strong> ${ficha.cpf} | <strong>Tel:</strong> ${ficha.telefone}</p>
-            <p><strong>Plano:</strong> ${ficha.plano || 'Nenhum'}</p>
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
-            <p><small><strong>Observações:</strong> ${ficha.observacoes}</small></p>
+            <p><strong>Procedimento:</strong> ${ficha.procedimento}</p>
+            <p><strong>CPF:</strong> ${ficha.cpf} | <strong>Plano:</strong> ${ficha.plano || 'Particular'}</p>
+            <hr style="border:0; border-top: 1px solid #eee; margin: 10px 0;">
+            <p><small>${ficha.observacoes}</small></p>
           `;
           listaFichas.appendChild(item);
         });
 
-        if(contadorFichas) contadorFichas.innerText = total;
+        if(contadorTotal) contadorTotal.innerText = todasAsFichas.length;
+        if(contadorFiltrado) contadorFiltrado.innerText = fichasParaMostrar.length;
 
-        // Configura os botões de excluir após carregar a lista
+        // Ativa botões de excluir
         document.querySelectorAll('.delete-btn').forEach(btn => {
           btn.onclick = async (e) => {
-            const idParaDeletar = e.target.getAttribute('data-id');
-            if(confirm("Deseja realmente excluir esta ficha?")) {
-              try {
-                await deleteDoc(doc(db, "fichas", idParaDeletar));
-              } catch (error) {
-                alert("Erro ao excluir ficha.");
-              }
+            if(confirm("Deseja apagar esta ficha definitivamente?")) {
+              await deleteDoc(doc(db, "fichas", e.target.dataset.id));
             }
           };
         });
+      }
+
+      // Lógica da Busca (Filtra Nome, CPF ou Procedimento)
+      inputBusca.addEventListener('input', (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtradas = todasAsFichas.filter(f => 
+          f.nome.toLowerCase().includes(termo) || 
+          f.cpf.includes(termo) || 
+          f.procedimento.toLowerCase().includes(termo)
+        );
+        renderizarFichas(filtradas);
       });
 
-      // --- 3. BOTÃO LIMPAR TUDO ---
-      const btnLimparTudo = document.getElementById('clear-protocols');
-      if(btnLimparTudo) {
-        btnLimparTudo.onclick = async () => {
-          if(confirm("⚠️ ATENÇÃO: Isso apagará TODAS as fichas permanentemente. Continuar?")) {
-            try {
-              const querySnapshot = await getDocs(collection(db, "fichas"));
+      // --- 4. LIMPAR TUDO (Com senha mestre) ---
+      const btnLimpar = document.getElementById('clear-protocols');
+      if(btnLimpar) {
+        btnLimpar.onclick = async () => {
+          const mestre = prompt("Digite a senha de administrador para APAGAR TUDO:");
+          if(mestre === "admin2029") {
+            if(confirm("ISSO APAGARÁ TODAS AS FICHAS! Confirma?")) {
+              const snapshot = await getDocs(collection(db, "fichas"));
               const batch = writeBatch(db);
-              querySnapshot.forEach((doc) => {
-                batch.delete(doc.ref);
-              });
+              snapshot.forEach(d => batch.delete(d.ref));
               await batch.commit();
-              alert("Banco de dados limpo com sucesso!");
-            } catch (error) {
-              alert("Erro ao limpar banco.");
+              alert("Banco de dados limpo.");
             }
+          } else {
+            alert("Senha incorreta.");
           }
         };
       }
     </script>
-
     <script src="app.js"></script>
   </body>
 </html>
