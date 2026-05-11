@@ -1,224 +1,282 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sistema Odonto | Gestão Profissional</title>
-    <link rel="stylesheet" href="styles.css" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siemaco Cor | Gestão Clínica</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-      body { display: none; } /* Bloqueio por senha */
-      .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
-      .status-aberto { background: #fff3cd; color: #856404; }
-      .status-concluido { background: #d4edda; color: #155724; }
-      .status-retorno { background: #d1ecf1; color: #0c5460; }
-      .btn-edit { background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
-      .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+        /* Estilos de Emergência para garantir funcionamento */
+        body { display: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        
+        /* Sistema de Abas */
+        .tab-bar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .tab-button { padding: 12px 24px; border: none; background: #e0e0e0; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+        .tab-button.active { background: #007bff; color: white; }
+        
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Status Badges */
+        .badge { padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .status-aberto { background: #ffeeba; color: #856404; }
+        .status-concluido { background: #d4edda; color: #155724; }
+        .status-retorno { background: #d1ecf1; color: #0c5460; }
+
+        /* Lista de Fichas */
+        .protocol-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #007bff; }
+        .actions button { margin-left: 5px; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-edit { background: #ffc107; color: #000; }
+        .btn-view { background: #17a2b8; color: #fff; }
+        .btn-del { background: #dc3545; color: #fff; }
+        
+        /* Formulário */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .btn-cancel { background: #6c757d; margin-top: 10px; }
     </style>
-  </head>
-  <body>
-    <header class="hero">
-      <div class="hero-content">
-        <h1>Siemaco cor</h1>
-        <p>Gestão moderna de fichas de pacientes odontológicos.</p>
-      </div>
-      <div class="hero-cards">
-        <article class="summary-card"><span>Fichas salvas</span><strong id="record-count">0</strong></article>
-        <article class="summary-card"><span>Resultados</span><strong id="filtered-count">0</strong></article>
-        <article class="summary-card"><span>Última ficha</span><strong id="last-added">Nenhuma</strong></article>
-      </div>
-    </header>
+</head>
+<body>
 
-    <main class="container">
-      <div class="tab-bar">
-        <button id="tab-form" class="tab-button active">Nova ficha / Editar</button>
-        <button id="tab-list" class="tab-button">Fichas</button>
-      </div>
+<header class="hero" style="background: #007bff; color: white; padding: 40px 20px; text-align: center;">
+    <h1>Siemaco Cor</h1>
+    <p>Sistema de Gestão de Pacientes Odontológicos</p>
+    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
+        <div class="card-mini">Fichas: <b id="count-total">0</b></div>
+        <div class="card-mini">Filtradas: <b id="count-filtered">0</b></div>
+    </div>
+</header>
 
-      <section id="form-section" class="card form-card active-tab">
-        <div class="card-heading">
-          <h2 id="form-title">Adicionar Ficha</h2>
-          <p>Preencha os dados do paciente abaixo.</p>
+<div class="container">
+    <div class="tab-bar">
+        <button id="btn-tab-form" class="tab-button active">📝 Nova Ficha / Editar</button>
+        <button id="btn-tab-list" class="tab-button">📂 Ver Fichas</button>
+    </div>
+
+    <div id="sec-form" class="section active">
+        <div class="card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+            <h2 id="form-title">Cadastrar Novo Paciente</h2>
+            <form id="main-form">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-group">
+                    <label>Status do Caso</label>
+                    <select id="f-status">
+                        <option value="aberto">🟡 Em Aberto</option>
+                        <option value="concluido">🟢 Concluído</option>
+                        <option value="retorno">🔵 Retorno Agendado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Nome Completo</label>
+                    <input type="text" id="f-nome" placeholder="Nome do paciente" required>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label>CPF</label>
+                        <input type="text" id="f-cpf" placeholder="000.000.000-00" maxlength="14" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Telefone</label>
+                        <input type="text" id="f-tel" placeholder="(00) 00000-0000" maxlength="15" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Procedimento Principal</label>
+                    <input type="text" id="f-proc" placeholder="Ex: Canal, Extração..." required>
+                </div>
+
+                <div class="form-group">
+                    <label>Observações Clínicas</label>
+                    <textarea id="f-obs" rows="4" placeholder="Detalhes do tratamento..."></textarea>
+                </div>
+
+                <button type="submit" id="btn-submit" class="btn-main">Salvar Ficha</button>
+                <button type="button" id="btn-cancel" class="btn-main btn-cancel" style="display: none;">Cancelar Edição</button>
+            </form>
         </div>
-        <form id="protocol-form">
-          <input type="hidden" id="edit-id" value=""> <label>Status do Atendimento</label>
-          <select id="client-status" required>
-            <option value="aberto">🟡 Em Aberto</option>
-            <option value="concluido">🟢 Concluido</option>
-            <option value="retorno">🔵 Retorno Agendado</option>
-          </select>
+    </div>
 
-          <label>Nome do Paciente</label>
-          <input type="text" id="client-name" placeholder="Nome Completo" required />
-
-          <label>CPF</label>
-          <input type="text" id="client-cpf" maxlength="14" placeholder="000.000.000-00" required />
-
-          <label>Telefone</label>
-          <input type="tel" id="client-phone" maxlength="15" placeholder="(00) 00000-0000" required />
-
-          <label>Motivo / Procedimento</label>
-          <input type="text" id="protocol-name" placeholder="Ex: Extração, Limpeza" required />
-
-          <label>Observações Clínicas</label>
-          <textarea id="protocol-description" rows="4" required></textarea>
-
-          <button type="submit" id="btn-save">Salvar Ficha</button>
-          <button type="button" id="btn-cancel-edit" style="display:none; background: #6c757d; margin-top: 10px;">Cancelar Edição</button>
-        </form>
-      </section>
-
-      <section id="list-section" class="card list-card">
-        <div class="section-header">
-          <h2>Fichas de Pacientes</h2>
-          <button id="clear-protocols" class="secondary">Limpar todos</button>
+    <div id="sec-list" class="section">
+        <div class="card" style="background: white; padding: 20px; border-radius: 12px;">
+            <input type="text" id="search-box" placeholder="🔎 Buscar por Nome ou CPF..." style="margin-bottom: 20px; padding: 15px; font-size: 16px;">
+            <div id="display-list">
+                <p style="text-align: center; color: #666;">Carregando fichas...</p>
+            </div>
         </div>
-        <input type="search" id="search-input" placeholder="Buscar por nome, CPF ou procedimento..." />
-        <div id="protocol-list" class="protocol-list"></div>
-      </section>
-    </main>
+    </div>
+</div>
 
-    <script type="module">
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // 1. ACESSO
-      const SENHA_CORRETA = "admin2029";
-      if (prompt("🔒 Senha da Clínica:") === SENHA_CORRETA) { document.body.style.display = "block"; } 
-      else { alert("Senha incorreta!"); window.location.reload(); }
+    // --- SEGURANÇA ---
+    const senha = prompt("Digite a senha de acesso:");
+    if (senha === "admin2029") {
+        document.body.style.display = "block";
+    } else {
+        alert("Senha incorreta!");
+        window.location.reload();
+    }
 
-      // CONFIG FIREBASE
-      const firebaseConfig = {
+    // --- CONFIGURAÇÃO FIREBASE ---
+    const firebaseConfig = {
         apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
         authDomain: "clinica-fichas.firebaseapp.com",
         projectId: "clinica-fichas",
         storageBucket: "clinica-fichas.firebasestorage.app",
         messagingSenderId: "218967082965",
         appId: "1:218967082965:web:daac1175e1d4fa92159f5c"
-      };
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      let todasAsFichas = [];
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let dadosLocais = [];
 
-      // 2. MÁSCARAS (CPF E TELEFONE)
-      document.getElementById('client-cpf').addEventListener('input', e => {
+    // --- CONTROLE DE ABAS ---
+    const btnForm = document.getElementById('btn-tab-form');
+    const btnList = document.getElementById('btn-tab-list');
+    const secForm = document.getElementById('sec-form');
+    const secList = document.getElementById('sec-list');
+
+    btnForm.onclick = () => {
+        btnForm.classList.add('active'); btnList.classList.remove('active');
+        secForm.classList.add('active'); secList.classList.remove('active');
+    };
+
+    btnList.onclick = () => {
+        btnList.classList.add('active'); btnForm.classList.remove('active');
+        secList.classList.add('active'); secForm.classList.remove('active');
+    };
+
+    // --- MÁSCARAS ---
+    document.getElementById('f-cpf').oninput = (e) => {
         let v = e.target.value.replace(/\D/g,"");
-        v = v.replace(/(\d{3})(\d)/,"$1.$2");
-        v = v.replace(/(\d{3})(\d)/,"$1.$2");
-        v = v.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+        v = v.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
         e.target.value = v;
-      });
-
-      document.getElementById('client-phone').addEventListener('input', e => {
+    };
+    document.getElementById('f-tel').oninput = (e) => {
         let v = e.target.value.replace(/\D/g,"");
-        v = v.replace(/^(\d{2})(\d)/g,"($1) $2");
-        v = v.replace(/(\d)(\d{4})$/,"$1-$2");
+        v = v.replace(/^(\d{2})(\d)/g,"($1) $2").replace(/(\d)(\d{4})$/,"$1-$2");
         e.target.value = v;
-      });
+    };
 
-      // 3. SALVAR OU ATUALIZAR
-      const form = document.getElementById('protocol-form');
-      form.addEventListener('submit', async (e) => {
+    // --- SALVAR / EDITAR ---
+    const form = document.getElementById('main-form');
+    form.onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-id').value;
-        const dados = {
-          nome: document.getElementById('client-name').value,
-          cpf: document.getElementById('client-cpf').value,
-          telefone: document.getElementById('client-phone').value,
-          procedimento: document.getElementById('protocol-name').value,
-          observacoes: document.getElementById('protocol-description').value,
-          status: document.getElementById('client-status').value,
-          dataRegistro: new Date()
+        const info = {
+            nome: document.getElementById('f-nome').value,
+            cpf: document.getElementById('f-cpf').value,
+            telefone: document.getElementById('f-tel').value,
+            procedimento: document.getElementById('f-proc').value,
+            observacoes: document.getElementById('f-obs').value,
+            status: document.getElementById('f-status').value,
+            data: new Date()
         };
 
         try {
-          if (id) {
-            await updateDoc(doc(db, "fichas", id), dados);
-            alert("✅ Atualizado!");
-          } else {
-            await addDoc(collection(db, "fichas"), dados);
-            alert("✅ Salvo!");
-          }
-          resetarForm();
-        } catch (err) { alert("Erro ao salvar."); }
-      });
+            if (id) {
+                await updateDoc(doc(db, "fichas", id), info);
+                alert("Alterações salvas com sucesso!");
+            } else {
+                await addDoc(collection(db, "fichas"), info);
+                alert("Paciente cadastrado!");
+            }
+            limparForm();
+            btnList.click(); // Vai para a lista após salvar
+        } catch (err) { alert("Erro ao salvar: " + err.message); }
+    };
 
-      function resetarForm() {
+    function limparForm() {
         form.reset();
         document.getElementById('edit-id').value = "";
-        document.getElementById('form-title').innerText = "Adicionar Ficha";
-        document.getElementById('btn-save').innerText = "Salvar Ficha";
-        document.getElementById('btn-cancel-edit').style.display = "none";
-      }
+        document.getElementById('form-title').innerText = "Cadastrar Novo Paciente";
+        document.getElementById('btn-submit').innerText = "Salvar Ficha";
+        document.getElementById('btn-cancel').style.display = "none";
+    }
+    document.getElementById('btn-cancel').onclick = limparForm;
 
-      document.getElementById('btn-cancel-edit').onclick = resetarForm;
+    // --- CARREGAR DADOS ---
+    const q = query(collection(db, "fichas"), orderBy("data", "desc"));
+    onSnapshot(q, (snapshot) => {
+        dadosLocais = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        render(dadosLocais);
+    });
 
-      // 4. LISTAR E RENDERIZAR
-      const q = query(collection(db, "fichas"), orderBy("dataRegistro", "desc"));
-      onSnapshot(q, (snapshot) => {
-        todasAsFichas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderizar(todasAsFichas);
-      });
-
-      function renderizar(fichas) {
-        const lista = document.getElementById('protocol-list');
-        lista.innerHTML = "";
-        fichas.forEach(f => {
-          const item = document.createElement('div');
-          item.className = 'protocol-item card';
-          const statusClasse = `status-${f.status}`;
-          const statusTexto = f.status.toUpperCase();
-
-          item.innerHTML = `
-            <div style="display:flex; justify-content:space-between">
-              <strong>${f.nome} <span class="status-badge ${statusClasse}">${statusTexto}</span></strong>
-              <div>
-                <button class="btn-edit" onclick="editarFicha('${f.id}')">Editar</button>
-                <button class="btn-view" onclick="verFicha('${f.id}')">Ver</button>
-                <button class="delete-btn" data-id="${f.id}" style="background:red; color:white; border:none; padding:5px; border-radius:4px;">X</button>
-              </div>
-            </div>
-            <p><small>${f.cpf} | ${f.procedimento}</small></p>
-          `;
-          lista.appendChild(item);
-        });
-        document.getElementById('record-count').innerText = todasAsFichas.length;
-        document.getElementById('filtered-count').innerText = fichas.length;
-
-        // Botões Deletar
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.onclick = async () => { if(confirm("Apagar?")) await deleteDoc(doc(db, "fichas", btn.dataset.id)); };
-        });
-      }
-
-      // Funções Globais para os botões da lista
-      window.editarFicha = (id) => {
-        const f = todasAsFichas.find(x => x.id === id);
-        document.getElementById('edit-id').value = f.id;
-        document.getElementById('client-name').value = f.nome;
-        document.getElementById('client-cpf').value = f.cpf;
-        document.getElementById('client-phone').value = f.telefone;
-        document.getElementById('protocol-name').value = f.procedimento;
-        document.getElementById('protocol-description').value = f.observacoes;
-        document.getElementById('client-status').value = f.status;
+    function render(lista) {
+        const container = document.getElementById('display-list');
+        container.innerHTML = "";
         
-        document.getElementById('form-title').innerText = "Editando Paciente";
-        document.getElementById('btn-save').innerText = "Salvar Alterações";
-        document.getElementById('btn-cancel-edit').style.display = "block";
+        lista.forEach(doc => {
+            const div = document.createElement('div');
+            div.className = 'protocol-item';
+            div.innerHTML = `
+                <div>
+                    <span class="badge status-${doc.status}">${doc.status}</span><br>
+                    <strong style="font-size: 18px;">${doc.nome}</strong><br>
+                    <small>CPF: ${doc.cpf} | Proc: ${doc.procedimento}</small>
+                </div>
+                <div class="actions">
+                    <button class="btn-view" onclick="ver('${doc.id}')">👁️</button>
+                    <button class="btn-edit" onclick="prepararEdicao('${doc.id}')">✏️</button>
+                    <button class="btn-del" onclick="apagar('${doc.id}')">🗑️</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        document.getElementById('count-total').innerText = dadosLocais.length;
+        document.getElementById('count-filtered').innerText = lista.length;
+    }
+
+    // --- BUSCA ---
+    document.getElementById('search-box').oninput = (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtrados = dadosLocais.filter(d => 
+            d.nome.toLowerCase().includes(termo) || d.cpf.includes(termo)
+        );
+        render(filtrados);
+    };
+
+    // --- FUNÇÕES GLOBAIS (PARA OS BOTÕES) ---
+    window.prepararEdicao = (id) => {
+        const d = dadosLocais.find(item => item.id === id);
+        if(!d) return;
+
+        document.getElementById('edit-id').value = d.id;
+        document.getElementById('f-nome').value = d.nome;
+        document.getElementById('f-cpf').value = d.cpf;
+        document.getElementById('f-tel').value = d.telefone;
+        document.getElementById('f-proc').value = d.procedimento;
+        document.getElementById('f-obs').value = d.observacoes;
+        document.getElementById('f-status').value = d.status;
+
+        document.getElementById('form-title').innerText = "Editando Registro";
+        document.getElementById('btn-submit').innerText = "Atualizar Ficha";
+        document.getElementById('btn-cancel').style.display = "block";
         
-        // Rola para o formulário
-        document.getElementById('tab-form').click();
-      };
+        btnForm.click(); // Volta para a aba do formulário
+    };
 
-      window.verFicha = (id) => {
-        const f = todasAsFichas.find(x => x.id === id);
-        alert(`DETALHES DO PACIENTE\n\nNome: ${f.nome}\nCPF: ${f.cpf}\nTel: ${f.telefone}\nStatus: ${f.status}\nProcedimento: ${f.procedimento}\nObs: ${f.observacoes}`);
-      };
+    window.ver = (id) => {
+        const d = dadosLocais.find(item => item.id === id);
+        alert(`PACIENTE: ${d.nome}\nCPF: ${d.cpf}\nTEL: ${d.telefone}\nSTATUS: ${d.status.toUpperCase()}\nPROCEDIMENTO: ${d.procedimento}\nOBS: ${d.observacoes}`);
+    };
 
-      // Busca
-      document.getElementById('search-input').addEventListener('input', e => {
-        const t = e.target.value.toLowerCase();
-        renderizar(todasAsFichas.filter(f => f.nome.toLowerCase().includes(t) || f.cpf.includes(t) || f.procedimento.toLowerCase().includes(t)));
-      });
-    </script>
-  </body>
+    window.apagar = async (id) => {
+        if (confirm("Tem certeza que deseja excluir esta ficha?")) {
+            await deleteDoc(doc(db, "fichas", id));
+        }
+    };
+
+</script>
+</body>
 </html>
