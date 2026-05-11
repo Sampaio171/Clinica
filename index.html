@@ -3,85 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Siemaco Cor | Gestão</title>
+    <title>Siemaco Cor | Gestão Completa</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* ESTILOS CRÍTICOS PARA AS ABAS FUNCIONAREM */
-        body { display: none; font-family: sans-serif; margin: 0; background: #f0f2f5; }
-        .aba-conteudo { display: none; padding: 20px; }
-        .aba-conteudo.ativa { display: block !important; } /* Força a exibição */
+        body { display: none; font-family: 'Segoe UI', sans-serif; margin: 0; background: #f0f2f5; color: #333; }
+        .menu-abas { display: flex; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .aba-btn { flex: 1; padding: 18px; border: none; background: none; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; border-bottom: 4px solid transparent; }
+        .aba-btn.ativa { border-bottom: 4px solid #007bff; color: #007bff; background: #f8f9ff; }
         
-        .menu-abas { display: flex; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .aba-btn { flex: 1; padding: 15px; border: none; background: none; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
-        .aba-btn.ativa { border-bottom: 3px solid #007bff; color: #007bff; }
+        .aba-conteudo { display: none; padding: 25px; max-width: 900px; margin: auto; }
+        .aba-conteudo.ativa { display: block !important; }
 
-        /* LISTAGEM */
-        .cartao-ficha { background: #fff; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .status { font-size: 11px; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; font-size: 14px; }
+        input, select, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+
+        .cartao-ficha { background: #fff; margin-bottom: 12px; padding: 18px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 6px solid #007bff; }
+        .info-paciente strong { font-size: 17px; color: #1a1a1a; }
+        .status { font-size: 10px; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; font-weight: 800; margin-left: 8px; vertical-align: middle; }
         .status-aberto { background: #fff3cd; color: #856404; }
         .status-concluido { background: #d4edda; color: #155724; }
         .status-retorno { background: #d1ecf1; color: #0c5460; }
         
-        /* BOTÕES */
-        .btn-acao { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-weight: bold; }
-        .btn-editar { background: #ffc107; }
+        .btn-acao { border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-left: 5px; transition: 0.2s; }
+        .btn-editar { background: #ffc107; color: #000; }
         .btn-ver { background: #17a2b8; color: white; }
         .btn-excluir { background: #dc3545; color: white; }
+        .btn-acao:hover { opacity: 0.8; transform: scale(1.05); }
     </style>
 </head>
 <body>
 
     <nav class="menu-abas">
         <button class="aba-btn ativa" onclick="trocarAba('cadastro')">📝 CADASTRAR / EDITAR</button>
-        <button class="aba-btn" onclick="trocarAba('listagem')">📂 VER FICHAS (<span id="contagem">0</span>)</button>
+        <button class="aba-btn" onclick="trocarAba('listagem')">📂 FICHAS SALVAS (<span id="contagem">0</span>)</button>
     </nav>
 
     <div id="aba-cadastro" class="aba-conteudo ativa">
-        <h2 id="titulo-form">Nova Ficha</h2>
-        <form id="meu-form">
-            <input type="hidden" id="edit-id">
-            
-            <p><label>Status:</label><br>
-            <select id="campo-status" style="width:100%; padding:10px;">
-                <option value="aberto">Em Aberto</option>
-                <option value="concluido">Concluído</option>
-                <option value="retorno">Retorno</option>
-            </select></p>
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+            <h2 id="titulo-form" style="margin-top:0; color:#007bff;">Cadastrar Paciente</h2>
+            <form id="meu-form">
+                <input type="hidden" id="edit-id">
+                
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Nome Completo</label>
+                        <input type="text" id="campo-nome" placeholder="Ex: João da Silva" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Status</label>
+                        <select id="campo-status">
+                            <option value="aberto">🟡 Em Aberto</option>
+                            <option value="concluido">🟢 Concluido</option>
+                            <option value="retorno">🔵 Retorno</option>
+                        </select>
+                    </div>
+                </div>
 
-            <p><label>Nome:</label><br>
-            <input type="text" id="campo-nome" style="width:100%; padding:10px;" required></p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" id="campo-nascimento" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CPF</label>
+                        <input type="text" id="campo-cpf" maxlength="14" placeholder="000.000.000-00" required>
+                    </div>
+                </div>
 
-            <div style="display:flex; gap:10px;">
-                <p style="flex:1"><label>CPF:</label><br>
-                <input type="text" id="campo-cpf" maxlength="14" style="width:100%; padding:10px;" required></p>
-                <p style="flex:1"><label>Telefone:</label><br>
-                <input type="text" id="campo-tel" maxlength="15" style="width:100%; padding:10px;" required></p>
-            </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="text" id="campo-tel" maxlength="15" placeholder="(00) 00000-0000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Empresa / Convênio</label>
+                        <input type="text" id="campo-empresa" placeholder="Ex: Siemaco, Particular...">
+                    </div>
+                </div>
 
-            <p><label>Procedimento:</label><br>
-            <input type="text" id="campo-proc" style="width:100%; padding:10px;" required></p>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>Procedimento</label>
+                    <input type="text" id="campo-proc" placeholder="Ex: Limpeza, Canal, Extração" required>
+                </div>
 
-            <p><label>Observações:</label><br>
-            <textarea id="campo-obs" rows="5" style="width:100%; padding:10px;"></textarea></p>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label>Observações Clínicas</label>
+                    <textarea id="campo-obs" rows="4" placeholder="Descreva detalhes do atendimento..."></textarea>
+                </div>
 
-            <button type="submit" id="btn-salvar" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:5px; font-weight:bold;">SALVAR FICHA</button>
-            <button type="button" id="btn-cancelar" onclick="limparEVoltar()" style="display:none; width:100%; margin-top:10px; padding:10px; background:#6c757d; color:white; border:none; border-radius:5px;">CANCELAR EDIÇÃO</button>
-        </form>
+                <button type="submit" id="btn-salvar" style="width:100%; padding:16px; background:#28a745; color:white; border:none; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer;">SALVAR FICHA</button>
+                <button type="button" id="btn-cancelar" onclick="limparEVoltar()" style="display:none; width:100%; margin-top:10px; padding:12px; background:#6c757d; color:white; border:none; border-radius:10px; cursor:pointer;">CANCELAR EDIÇÃO</button>
+            </form>
+        </div>
     </div>
 
     <div id="aba-listagem" class="aba-conteudo">
-        <input type="text" id="busca" placeholder="🔍 Buscar por nome ou CPF..." style="width:100%; padding:15px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc;">
-        <div id="lista-fichas">Carregando...</div>
+        <input type="text" id="busca" placeholder="🔍 Buscar por Nome, CPF ou Empresa..." style="width:100%; padding:15px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing: border-box; font-size:16px;">
+        <div id="lista-fichas">Carregando dados do servidor...</div>
     </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // 1. SENHA
-    if (prompt("Senha:") !== "admin2029") { window.location.reload(); } else { document.body.style.display = "block"; }
+    // 1. ACESSO
+    if (prompt("Senha de Acesso:") !== "admin2029") { window.location.reload(); } else { document.body.style.display = "block"; }
 
-    // 2. FIREBASE
+    // 2. CONFIGURAÇÃO
     const firebaseConfig = {
         apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
         authDomain: "clinica-fichas.firebaseapp.com",
@@ -94,15 +124,11 @@
     const db = getFirestore(app);
     let dadosCache = [];
 
-    // 3. SISTEMA DE ABAS (CORRIGIDO)
+    // 3. ABAS
     window.trocarAba = (nome) => {
-        // Remove 'ativa' de tudo
         document.querySelectorAll('.aba-conteudo').forEach(a => a.classList.remove('ativa'));
         document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('ativa'));
-        
-        // Adiciona na selecionada
         document.getElementById('aba-' + nome).classList.add('ativa');
-        // Acha o botão pelo texto ou posição (mais simples)
         if(nome === 'cadastro') document.querySelectorAll('.aba-btn')[0].classList.add('ativa');
         else document.querySelectorAll('.aba-btn')[1].classList.add('ativa');
     };
@@ -119,27 +145,29 @@
         e.target.value = v;
     };
 
-    // 5. SALVAR / EDITAR
+    // 5. SALVAR / ATUALIZAR
     document.getElementById('meu-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-id').value;
         const info = {
             nome: document.getElementById('campo-nome').value,
+            nascimento: document.getElementById('campo-nascimento').value,
             cpf: document.getElementById('campo-cpf').value,
             telefone: document.getElementById('campo-tel').value,
+            empresa: document.getElementById('campo-empresa').value,
             procedimento: document.getElementById('campo-proc').value,
             observacoes: document.getElementById('campo-obs').value,
             status: document.getElementById('campo-status').value,
-            data: new Date()
+            dataPost: new Date()
         };
 
         try {
             if(id) {
                 await updateDoc(doc(db, "fichas", id), info);
-                alert("Atualizado!");
+                alert("Ficha atualizada!");
             } else {
                 await addDoc(collection(db, "fichas"), info);
-                alert("Salvo!");
+                alert("Nova ficha salva!");
             }
             limparEVoltar();
             trocarAba('listagem');
@@ -149,13 +177,13 @@
     window.limparEVoltar = () => {
         document.getElementById('meu-form').reset();
         document.getElementById('edit-id').value = "";
-        document.getElementById('titulo-form').innerText = "Nova Ficha";
+        document.getElementById('titulo-form').innerText = "Cadastrar Paciente";
         document.getElementById('btn-salvar').innerText = "SALVAR FICHA";
         document.getElementById('btn-cancelar').style.display = "none";
     };
 
-    // 6. LER DADOS
-    onSnapshot(query(collection(db, "fichas"), orderBy("data", "desc")), (snap) => {
+    // 6. RENDERIZAÇÃO
+    onSnapshot(query(collection(db, "fichas"), orderBy("dataPost", "desc")), (snap) => {
         dadosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderizar(dadosCache);
     });
@@ -166,13 +194,13 @@
         document.getElementById('contagem').innerText = dadosCache.length;
 
         lista.forEach(item => {
-            const row = document.createElement('div');
-            row.className = 'cartao-ficha';
-            row.innerHTML = `
-                <div>
-                    <span class="status status-${item.status}">${item.status}</span><br>
-                    <strong>${item.nome}</strong><br>
-                    <small>${item.cpf}</small>
+            const card = document.createElement('div');
+            card.className = 'cartao-ficha';
+            card.innerHTML = `
+                <div class="info-paciente">
+                    <strong>${item.nome}</strong> <span class="status status-${item.status}">${item.status}</span><br>
+                    <small>📍 ${item.empresa || 'Sem Empresa'} | 🎂 ${item.nascimento.split('-').reverse().join('/')}</small><br>
+                    <small>📄 CPF: ${item.cpf} | 🦷 ${item.procedimento}</small>
                 </div>
                 <div>
                     <button class="btn-acao btn-ver" onclick="ver('${item.id}')">👁️</button>
@@ -180,22 +208,24 @@
                     <button class="btn-acao btn-excluir" onclick="apagar('${item.id}')">🗑️</button>
                 </div>
             `;
-            divLista.appendChild(row);
+            divLista.appendChild(card);
         });
     }
 
-    // 7. FUNÇÕES DOS BOTÕES (LIGADAS AO WINDOW)
+    // 7. BOTÕES GLOBAIS
     window.prepararEdicao = (id) => {
         const d = dadosCache.find(x => x.id === id);
         document.getElementById('edit-id').value = d.id;
         document.getElementById('campo-nome').value = d.nome;
+        document.getElementById('campo-nascimento').value = d.nascimento;
         document.getElementById('campo-cpf').value = d.cpf;
         document.getElementById('campo-tel').value = d.telefone;
+        document.getElementById('campo-empresa').value = d.empresa || "";
         document.getElementById('campo-proc').value = d.procedimento;
         document.getElementById('campo-obs').value = d.observacoes;
         document.getElementById('campo-status').value = d.status;
 
-        document.getElementById('titulo-form').innerText = "Editando Registro";
+        document.getElementById('titulo-form').innerText = "Editando Paciente";
         document.getElementById('btn-salvar').innerText = "ATUALIZAR DADOS";
         document.getElementById('btn-cancelar').style.display = "block";
         trocarAba('cadastro');
@@ -203,18 +233,21 @@
 
     window.ver = (id) => {
         const d = dadosCache.find(x => x.id === id);
-        alert(`PACIENTE: ${d.nome}\nCPF: ${d.cpf}\nTEL: ${d.telefone}\nSTATUS: ${d.status}\nPROCEDIMENTO: ${d.procedimento}\n\nOBSERVAÇÕES: ${d.observacoes}`);
+        const dataNasc = d.nascimento.split('-').reverse().join('/');
+        alert(`DETALHES DO PACIENTE\n\nNome: ${d.nome}\nNascimento: ${dataNasc}\nEmpresa: ${d.empresa || 'Não informado'}\nCPF: ${d.cpf}\nTel: ${d.telefone}\n\nProcedimento: ${d.procedimento}\nObservações: ${d.observacoes}`);
     };
 
     window.apagar = async (id) => {
-        if(confirm("Excluir esta ficha permanentemente?")) {
-            await deleteDoc(doc(db, "fichas", id));
-        }
+        if(confirm("Deseja apagar esta ficha definitivamente?")) await deleteDoc(doc(db, "fichas", id));
     };
 
     document.getElementById('busca').oninput = e => {
-        const termo = e.target.value.toLowerCase();
-        renderizar(dadosCache.filter(d => d.nome.toLowerCase().includes(termo) || d.cpf.includes(termo)));
+        const t = e.target.value.toLowerCase();
+        renderizar(dadosCache.filter(d => 
+            d.nome.toLowerCase().includes(t) || 
+            d.cpf.includes(t) || 
+            (d.empresa && d.empresa.toLowerCase().includes(t))
+        ));
     };
 
 </script>
