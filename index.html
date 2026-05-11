@@ -3,234 +3,222 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sistema Odonto | Fichas de Pacientes</title>
+    <title>Sistema Odonto | Gestão Profissional</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-      /* Esconde o conteúdo até a senha ser digitada */
-      body { display: none; }
+      body { display: none; } /* Bloqueio por senha */
+      .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+      .status-aberto { background: #fff3cd; color: #856404; }
+      .status-concluido { background: #d4edda; color: #155724; }
+      .status-retorno { background: #d1ecf1; color: #0c5460; }
+      .btn-edit { background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
+      .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; }
     </style>
   </head>
   <body>
     <header class="hero">
       <div class="hero-content">
         <h1>Siemaco cor</h1>
-        <p>Gestão moderna de fichas de pacientes odontológicos com painel interativo, buscas rápidas e controle visual.</p>
+        <p>Gestão moderna de fichas de pacientes odontológicos.</p>
       </div>
       <div class="hero-cards">
-        <article class="summary-card">
-          <span>Fichas salvas</span>
-          <strong id="record-count">0</strong>
-        </article>
-        <article class="summary-card">
-          <span>Resultados visíveis</span>
-          <strong id="filtered-count">0</strong>
-        </article>
-        <article class="summary-card">
-          <span>Última ficha</span>
-          <strong id="last-added">Nenhuma</strong>
-        </article>
+        <article class="summary-card"><span>Fichas salvas</span><strong id="record-count">0</strong></article>
+        <article class="summary-card"><span>Resultados</span><strong id="filtered-count">0</strong></article>
+        <article class="summary-card"><span>Última ficha</span><strong id="last-added">Nenhuma</strong></article>
       </div>
     </header>
 
     <main class="container">
       <div class="tab-bar">
-        <button id="tab-form" class="tab-button active">Nova ficha</button>
+        <button id="tab-form" class="tab-button active">Nova ficha / Editar</button>
         <button id="tab-list" class="tab-button">Fichas</button>
       </div>
 
       <section id="form-section" class="card form-card active-tab">
         <div class="card-heading">
-          <h2>Adicionar Ficha do Paciente</h2>
-          <p>Preencha os dados abaixo para registrar uma ficha completa do paciente.</p>
+          <h2 id="form-title">Adicionar Ficha</h2>
+          <p>Preencha os dados do paciente abaixo.</p>
         </div>
         <form id="protocol-form">
-          <label for="protocol-name">Motivo / Procedimento</label>
-          <input type="text" id="protocol-name" name="protocol-name" placeholder="Ex: Limpeza, Extração" required />
+          <input type="hidden" id="edit-id" value=""> <label>Status do Atendimento</label>
+          <select id="client-status" required>
+            <option value="aberto">🟡 Em Aberto</option>
+            <option value="concluido">🟢 Concluido</option>
+            <option value="retorno">🔵 Retorno Agendado</option>
+          </select>
 
-          <label for="client-name">Nome do Paciente</label>
-          <input type="text" id="client-name" name="client-name" placeholder="Ex: João Silva" required />
+          <label>Nome do Paciente</label>
+          <input type="text" id="client-name" placeholder="Nome Completo" required />
 
-          <label for="client-cpf">CPF do Paciente</label>
-          <input type="text" id="client-cpf" name="client-cpf" placeholder="000.000.000-00" required />
+          <label>CPF</label>
+          <input type="text" id="client-cpf" maxlength="14" placeholder="000.000.000-00" required />
 
-          <label for="client-phone">Telefone</label>
-          <input type="tel" id="client-phone" name="client-phone" placeholder="(00) 00000-0000" required />
+          <label>Telefone</label>
+          <input type="tel" id="client-phone" maxlength="15" placeholder="(00) 00000-0000" required />
 
-          <label for="client-dob">Data de Nascimento</label>
-          <input type="date" id="client-dob" name="client-dob" required />
+          <label>Motivo / Procedimento</label>
+          <input type="text" id="protocol-name" placeholder="Ex: Extração, Limpeza" required />
 
-          <label for="client-plan">Plano / Convênio</label>
-          <input type="text" id="client-plan" name="client-plan" placeholder="Ex: Particular, Unimed" />
+          <label>Observações Clínicas</label>
+          <textarea id="protocol-description" rows="4" required></textarea>
 
-          <label for="protocol-description">Observações</label>
-          <textarea id="protocol-description" name="protocol-description" rows="4" placeholder="Descreva o atendimento ou histórico" required></textarea>
-
-          <label for="protocol-steps">Anotações extras</label>
-          <textarea id="protocol-steps" name="protocol-steps" rows="3" placeholder="Observações adicionais, orientações ou recomendações" required></textarea>
-
-          <button type="submit">Salvar Ficha</button>
+          <button type="submit" id="btn-save">Salvar Ficha</button>
+          <button type="button" id="btn-cancel-edit" style="display:none; background: #6c757d; margin-top: 10px;">Cancelar Edição</button>
         </form>
       </section>
 
       <section id="list-section" class="card list-card">
         <div class="section-header">
-          <div>
-            <h2>Fichas de Pacientes</h2>
-            <p>Encontre e administre fichas cadastradas com filtros rápidos.</p>
-          </div>
+          <h2>Fichas de Pacientes</h2>
           <button id="clear-protocols" class="secondary">Limpar todos</button>
         </div>
-        <div class="search-row">
-          <input type="search" id="search-input" placeholder="Buscar por paciente, CPF, telefone, plano ou procedimento" />
-        </div>
+        <input type="search" id="search-input" placeholder="Buscar por nome, CPF ou procedimento..." />
         <div id="protocol-list" class="protocol-list"></div>
       </section>
     </main>
 
-    <footer class="footer">
-      <p>Desenvolvido para gestão de fichas de pacientes odontológicos.</p>
-    </footer>
-
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-      import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      import { getFirestore, collection, addDoc, query, onSnapshot, orderBy, doc, deleteDoc, updateDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // --- 1. CONTROLE DE ACESSO ---
+      // 1. ACESSO
       const SENHA_CORRETA = "admin2029";
-      const senhaInformada = prompt("🔒 Acesso Restrito. Digite a senha da clínica:");
+      if (prompt("🔒 Senha da Clínica:") === SENHA_CORRETA) { document.body.style.display = "block"; } 
+      else { alert("Senha incorreta!"); window.location.reload(); }
 
-      if (senhaInformada === SENHA_CORRETA) {
-        document.body.style.display = "block"; // Libera o site
-      } else {
-        alert("Senha incorreta!");
-        window.location.reload(); // Recarrega para pedir de novo
-      }
-
-      // --- CONFIGURAÇÃO FIREBASE ---
+      // CONFIG FIREBASE
       const firebaseConfig = {
         apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
         authDomain: "clinica-fichas.firebaseapp.com",
         projectId: "clinica-fichas",
         storageBucket: "clinica-fichas.firebasestorage.app",
         messagingSenderId: "218967082965",
-        appId: "1:218967082965:web:daac1175e1d4fa92159f5c",
-        measurementId: "G-5QLMMYXTM8"
+        appId: "1:218967082965:web:daac1175e1d4fa92159f5c"
       };
-
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
+      let todasAsFichas = [];
 
-      let todasAsFichas = []; // Cache local para busca instantânea
-
-      // --- 2. SALVAR FICHA ---
-      const formulario = document.getElementById('protocol-form');
-      if (formulario) {
-        formulario.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const dadosPaciente = {
-            procedimento: document.getElementById('protocol-name').value,
-            nome: document.getElementById('client-name').value,
-            cpf: document.getElementById('client-cpf').value,
-            telefone: document.getElementById('client-phone').value,
-            dataNascimento: document.getElementById('client-dob').value,
-            plano: document.getElementById('client-plan').value,
-            observacoes: document.getElementById('protocol-description').value,
-            anotacoesExtras: document.getElementById('protocol-steps').value,
-            dataRegistro: new Date()
-          };
-
-          try {
-            await addDoc(collection(db, "fichas"), dadosPaciente);
-            alert("✅ Ficha de " + dadosPaciente.nome + " salva com sucesso!");
-            formulario.reset();
-          } catch (error) {
-            alert("❌ Erro ao salvar ficha.");
-          }
-        });
-      }
-
-      // --- 3. LISTAR E FILTRAR EM TEMPO REAL ---
-      const listaFichas = document.getElementById('protocol-list');
-      const contadorTotal = document.getElementById('record-count');
-      const contadorFiltrado = document.getElementById('filtered-count');
-      const inputBusca = document.getElementById('search-input');
-
-      const q = query(collection(db, "fichas"), orderBy("dataRegistro", "desc"));
-
-      onSnapshot(q, (snapshot) => {
-        todasAsFichas = [];
-        snapshot.forEach((doc) => {
-          todasAsFichas.push({ id: doc.id, ...doc.data() });
-        });
-        renderizarFichas(todasAsFichas);
+      // 2. MÁSCARAS (CPF E TELEFONE)
+      document.getElementById('client-cpf').addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g,"");
+        v = v.replace(/(\d{3})(\d)/,"$1.$2");
+        v = v.replace(/(\d{3})(\d)/,"$1.$2");
+        v = v.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+        e.target.value = v;
       });
 
-      function renderizarFichas(fichasParaMostrar) {
-        listaFichas.innerHTML = "";
-        fichasParaMostrar.forEach((ficha) => {
-          const data = ficha.dataRegistro?.toDate ? ficha.dataRegistro.toDate().toLocaleString('pt-BR') : "";
-          
+      document.getElementById('client-phone').addEventListener('input', e => {
+        let v = e.target.value.replace(/\D/g,"");
+        v = v.replace(/^(\d{2})(\d)/g,"($1) $2");
+        v = v.replace(/(\d)(\d{4})$/,"$1-$2");
+        e.target.value = v;
+      });
+
+      // 3. SALVAR OU ATUALIZAR
+      const form = document.getElementById('protocol-form');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-id').value;
+        const dados = {
+          nome: document.getElementById('client-name').value,
+          cpf: document.getElementById('client-cpf').value,
+          telefone: document.getElementById('client-phone').value,
+          procedimento: document.getElementById('protocol-name').value,
+          observacoes: document.getElementById('protocol-description').value,
+          status: document.getElementById('client-status').value,
+          dataRegistro: new Date()
+        };
+
+        try {
+          if (id) {
+            await updateDoc(doc(db, "fichas", id), dados);
+            alert("✅ Atualizado!");
+          } else {
+            await addDoc(collection(db, "fichas"), dados);
+            alert("✅ Salvo!");
+          }
+          resetarForm();
+        } catch (err) { alert("Erro ao salvar."); }
+      });
+
+      function resetarForm() {
+        form.reset();
+        document.getElementById('edit-id').value = "";
+        document.getElementById('form-title').innerText = "Adicionar Ficha";
+        document.getElementById('btn-save').innerText = "Salvar Ficha";
+        document.getElementById('btn-cancel-edit').style.display = "none";
+      }
+
+      document.getElementById('btn-cancel-edit').onclick = resetarForm;
+
+      // 4. LISTAR E RENDERIZAR
+      const q = query(collection(db, "fichas"), orderBy("dataRegistro", "desc"));
+      onSnapshot(q, (snapshot) => {
+        todasAsFichas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizar(todasAsFichas);
+      });
+
+      function renderizar(fichas) {
+        const lista = document.getElementById('protocol-list');
+        lista.innerHTML = "";
+        fichas.forEach(f => {
           const item = document.createElement('div');
           item.className = 'protocol-item card';
+          const statusClasse = `status-${f.status}`;
+          const statusTexto = f.status.toUpperCase();
+
           item.innerHTML = `
-            <div class="protocol-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="display:flex; justify-content:space-between">
+              <strong>${f.nome} <span class="status-badge ${statusClasse}">${statusTexto}</span></strong>
               <div>
-                <strong>${ficha.nome}</strong><br>
-                <small style="color: #666;">${data}</small>
+                <button class="btn-edit" onclick="editarFicha('${f.id}')">Editar</button>
+                <button class="btn-view" onclick="verFicha('${f.id}')">Ver</button>
+                <button class="delete-btn" data-id="${f.id}" style="background:red; color:white; border:none; padding:5px; border-radius:4px;">X</button>
               </div>
-              <button class="delete-btn" data-id="${ficha.id}" style="background: #ff4d4d; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
             </div>
-            <p><strong>Procedimento:</strong> ${ficha.procedimento}</p>
-            <p><strong>CPF:</strong> ${ficha.cpf} | <strong>Plano:</strong> ${ficha.plano || 'Particular'}</p>
-            <hr style="border:0; border-top: 1px solid #eee; margin: 10px 0;">
-            <p><small>${ficha.observacoes}</small></p>
+            <p><small>${f.cpf} | ${f.procedimento}</small></p>
           `;
-          listaFichas.appendChild(item);
+          lista.appendChild(item);
         });
+        document.getElementById('record-count').innerText = todasAsFichas.length;
+        document.getElementById('filtered-count').innerText = fichas.length;
 
-        if(contadorTotal) contadorTotal.innerText = todasAsFichas.length;
-        if(contadorFiltrado) contadorFiltrado.innerText = fichasParaMostrar.length;
-
-        // Ativa botões de excluir
+        // Botões Deletar
         document.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.onclick = async (e) => {
-            if(confirm("Deseja apagar esta ficha definitivamente?")) {
-              await deleteDoc(doc(db, "fichas", e.target.dataset.id));
-            }
-          };
+          btn.onclick = async () => { if(confirm("Apagar?")) await deleteDoc(doc(db, "fichas", btn.dataset.id)); };
         });
       }
 
-      // Lógica da Busca (Filtra Nome, CPF ou Procedimento)
-      inputBusca.addEventListener('input', (e) => {
-        const termo = e.target.value.toLowerCase();
-        const filtradas = todasAsFichas.filter(f => 
-          f.nome.toLowerCase().includes(termo) || 
-          f.cpf.includes(termo) || 
-          f.procedimento.toLowerCase().includes(termo)
-        );
-        renderizarFichas(filtradas);
-      });
+      // Funções Globais para os botões da lista
+      window.editarFicha = (id) => {
+        const f = todasAsFichas.find(x => x.id === id);
+        document.getElementById('edit-id').value = f.id;
+        document.getElementById('client-name').value = f.nome;
+        document.getElementById('client-cpf').value = f.cpf;
+        document.getElementById('client-phone').value = f.telefone;
+        document.getElementById('protocol-name').value = f.procedimento;
+        document.getElementById('protocol-description').value = f.observacoes;
+        document.getElementById('client-status').value = f.status;
+        
+        document.getElementById('form-title').innerText = "Editando Paciente";
+        document.getElementById('btn-save').innerText = "Salvar Alterações";
+        document.getElementById('btn-cancel-edit').style.display = "block";
+        
+        // Rola para o formulário
+        document.getElementById('tab-form').click();
+      };
 
-      // --- 4. LIMPAR TUDO (Com senha mestre) ---
-      const btnLimpar = document.getElementById('clear-protocols');
-      if(btnLimpar) {
-        btnLimpar.onclick = async () => {
-          const mestre = prompt("Digite a senha de administrador para APAGAR TUDO:");
-          if(mestre === "admin2029") {
-            if(confirm("ISSO APAGARÁ TODAS AS FICHAS! Confirma?")) {
-              const snapshot = await getDocs(collection(db, "fichas"));
-              const batch = writeBatch(db);
-              snapshot.forEach(d => batch.delete(d.ref));
-              await batch.commit();
-              alert("Banco de dados limpo.");
-            }
-          } else {
-            alert("Senha incorreta.");
-          }
-        };
-      }
+      window.verFicha = (id) => {
+        const f = todasAsFichas.find(x => x.id === id);
+        alert(`DETALHES DO PACIENTE\n\nNome: ${f.nome}\nCPF: ${f.cpf}\nTel: ${f.telefone}\nStatus: ${f.status}\nProcedimento: ${f.procedimento}\nObs: ${f.observacoes}`);
+      };
+
+      // Busca
+      document.getElementById('search-input').addEventListener('input', e => {
+        const t = e.target.value.toLowerCase();
+        renderizar(todasAsFichas.filter(f => f.nome.toLowerCase().includes(t) || f.cpf.includes(t) || f.procedimento.toLowerCase().includes(t)));
+      });
     </script>
-    <script src="app.js"></script>
   </body>
 </html>
