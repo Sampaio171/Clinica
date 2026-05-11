@@ -3,130 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Siemaco Cor | Gestão Clínica</title>
+    <title>Siemaco Cor | Gestão</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Estilos de Emergência para garantir funcionamento */
-        body { display: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; }
-        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        /* ESTILOS CRÍTICOS PARA AS ABAS FUNCIONAREM */
+        body { display: none; font-family: sans-serif; margin: 0; background: #f0f2f5; }
+        .aba-conteudo { display: none; padding: 20px; }
+        .aba-conteudo.ativa { display: block !important; } /* Força a exibição */
         
-        /* Sistema de Abas */
-        .tab-bar { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
-        .tab-button { padding: 12px 24px; border: none; background: #e0e0e0; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-        .tab-button.active { background: #007bff; color: white; }
-        
-        .section { display: none; }
-        .section.active { display: block; }
+        .menu-abas { display: flex; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .aba-btn { flex: 1; padding: 15px; border: none; background: none; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
+        .aba-btn.ativa { border-bottom: 3px solid #007bff; color: #007bff; }
 
-        /* Status Badges */
-        .badge { padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .status-aberto { background: #ffeeba; color: #856404; }
+        /* LISTAGEM */
+        .cartao-ficha { background: #fff; margin-bottom: 10px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .status { font-size: 11px; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
+        .status-aberto { background: #fff3cd; color: #856404; }
         .status-concluido { background: #d4edda; color: #155724; }
         .status-retorno { background: #d1ecf1; color: #0c5460; }
-
-        /* Lista de Fichas */
-        .protocol-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #007bff; }
-        .actions button { margin-left: 5px; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-edit { background: #ffc107; color: #000; }
-        .btn-view { background: #17a2b8; color: #fff; }
-        .btn-del { background: #dc3545; color: #fff; }
         
-        /* Formulário */
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn-main { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
-        .btn-cancel { background: #6c757d; margin-top: 10px; }
+        /* BOTÕES */
+        .btn-acao { border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; margin-left: 5px; font-weight: bold; }
+        .btn-editar { background: #ffc107; }
+        .btn-ver { background: #17a2b8; color: white; }
+        .btn-excluir { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
 
-<header class="hero" style="background: #007bff; color: white; padding: 40px 20px; text-align: center;">
-    <h1>Siemaco Cor</h1>
-    <p>Sistema de Gestão de Pacientes Odontológicos</p>
-    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
-        <div class="card-mini">Fichas: <b id="count-total">0</b></div>
-        <div class="card-mini">Filtradas: <b id="count-filtered">0</b></div>
-    </div>
-</header>
+    <nav class="menu-abas">
+        <button class="aba-btn ativa" onclick="trocarAba('cadastro')">📝 CADASTRAR / EDITAR</button>
+        <button class="aba-btn" onclick="trocarAba('listagem')">📂 VER FICHAS (<span id="contagem">0</span>)</button>
+    </nav>
 
-<div class="container">
-    <div class="tab-bar">
-        <button id="btn-tab-form" class="tab-button active">📝 Nova Ficha / Editar</button>
-        <button id="btn-tab-list" class="tab-button">📂 Ver Fichas</button>
-    </div>
+    <div id="aba-cadastro" class="aba-conteudo ativa">
+        <h2 id="titulo-form">Nova Ficha</h2>
+        <form id="meu-form">
+            <input type="hidden" id="edit-id">
+            
+            <p><label>Status:</label><br>
+            <select id="campo-status" style="width:100%; padding:10px;">
+                <option value="aberto">Em Aberto</option>
+                <option value="concluido">Concluído</option>
+                <option value="retorno">Retorno</option>
+            </select></p>
 
-    <div id="sec-form" class="section active">
-        <div class="card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-            <h2 id="form-title">Cadastrar Novo Paciente</h2>
-            <form id="main-form">
-                <input type="hidden" id="edit-id">
-                
-                <div class="form-group">
-                    <label>Status do Caso</label>
-                    <select id="f-status">
-                        <option value="aberto">🟡 Em Aberto</option>
-                        <option value="concluido">🟢 Concluído</option>
-                        <option value="retorno">🔵 Retorno Agendado</option>
-                    </select>
-                </div>
+            <p><label>Nome:</label><br>
+            <input type="text" id="campo-nome" style="width:100%; padding:10px;" required></p>
 
-                <div class="form-group">
-                    <label>Nome Completo</label>
-                    <input type="text" id="f-nome" placeholder="Nome do paciente" required>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <div class="form-group" style="flex: 1;">
-                        <label>CPF</label>
-                        <input type="text" id="f-cpf" placeholder="000.000.000-00" maxlength="14" required>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label>Telefone</label>
-                        <input type="text" id="f-tel" placeholder="(00) 00000-0000" maxlength="15" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Procedimento Principal</label>
-                    <input type="text" id="f-proc" placeholder="Ex: Canal, Extração..." required>
-                </div>
-
-                <div class="form-group">
-                    <label>Observações Clínicas</label>
-                    <textarea id="f-obs" rows="4" placeholder="Detalhes do tratamento..."></textarea>
-                </div>
-
-                <button type="submit" id="btn-submit" class="btn-main">Salvar Ficha</button>
-                <button type="button" id="btn-cancel" class="btn-main btn-cancel" style="display: none;">Cancelar Edição</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="sec-list" class="section">
-        <div class="card" style="background: white; padding: 20px; border-radius: 12px;">
-            <input type="text" id="search-box" placeholder="🔎 Buscar por Nome ou CPF..." style="margin-bottom: 20px; padding: 15px; font-size: 16px;">
-            <div id="display-list">
-                <p style="text-align: center; color: #666;">Carregando fichas...</p>
+            <div style="display:flex; gap:10px;">
+                <p style="flex:1"><label>CPF:</label><br>
+                <input type="text" id="campo-cpf" maxlength="14" style="width:100%; padding:10px;" required></p>
+                <p style="flex:1"><label>Telefone:</label><br>
+                <input type="text" id="campo-tel" maxlength="15" style="width:100%; padding:10px;" required></p>
             </div>
-        </div>
+
+            <p><label>Procedimento:</label><br>
+            <input type="text" id="campo-proc" style="width:100%; padding:10px;" required></p>
+
+            <p><label>Observações:</label><br>
+            <textarea id="campo-obs" rows="5" style="width:100%; padding:10px;"></textarea></p>
+
+            <button type="submit" id="btn-salvar" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:5px; font-weight:bold;">SALVAR FICHA</button>
+            <button type="button" id="btn-cancelar" onclick="limparEVoltar()" style="display:none; width:100%; margin-top:10px; padding:10px; background:#6c757d; color:white; border:none; border-radius:5px;">CANCELAR EDIÇÃO</button>
+        </form>
     </div>
-</div>
+
+    <div id="aba-listagem" class="aba-conteudo">
+        <input type="text" id="busca" placeholder="🔍 Buscar por nome ou CPF..." style="width:100%; padding:15px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc;">
+        <div id="lista-fichas">Carregando...</div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- SEGURANÇA ---
-    const senha = prompt("Digite a senha de acesso:");
-    if (senha === "admin2029") {
-        document.body.style.display = "block";
-    } else {
-        alert("Senha incorreta!");
-        window.location.reload();
-    }
+    // 1. SENHA
+    if (prompt("Senha:") !== "admin2029") { window.location.reload(); } else { document.body.style.display = "block"; }
 
-    // --- CONFIGURAÇÃO FIREBASE ---
+    // 2. FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyCdyr1TA-zF98PLeCheeb5Aoo0HwAnDJ7o",
         authDomain: "clinica-fichas.firebaseapp.com",
@@ -137,144 +92,129 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let dadosLocais = [];
+    let dadosCache = [];
 
-    // --- CONTROLE DE ABAS ---
-    const btnForm = document.getElementById('btn-tab-form');
-    const btnList = document.getElementById('btn-tab-list');
-    const secForm = document.getElementById('sec-form');
-    const secList = document.getElementById('sec-list');
-
-    btnForm.onclick = () => {
-        btnForm.classList.add('active'); btnList.classList.remove('active');
-        secForm.classList.add('active'); secList.classList.remove('active');
+    // 3. SISTEMA DE ABAS (CORRIGIDO)
+    window.trocarAba = (nome) => {
+        // Remove 'ativa' de tudo
+        document.querySelectorAll('.aba-conteudo').forEach(a => a.classList.remove('ativa'));
+        document.querySelectorAll('.aba-btn').forEach(b => b.classList.remove('ativa'));
+        
+        // Adiciona na selecionada
+        document.getElementById('aba-' + nome).classList.add('ativa');
+        // Acha o botão pelo texto ou posição (mais simples)
+        if(nome === 'cadastro') document.querySelectorAll('.aba-btn')[0].classList.add('ativa');
+        else document.querySelectorAll('.aba-btn')[1].classList.add('ativa');
     };
 
-    btnList.onclick = () => {
-        btnList.classList.add('active'); btnForm.classList.remove('active');
-        secList.classList.add('active'); secForm.classList.remove('active');
-    };
-
-    // --- MÁSCARAS ---
-    document.getElementById('f-cpf').oninput = (e) => {
+    // 4. MÁSCARAS
+    document.getElementById('campo-cpf').oninput = e => {
         let v = e.target.value.replace(/\D/g,"");
         v = v.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
         e.target.value = v;
     };
-    document.getElementById('f-tel').oninput = (e) => {
+    document.getElementById('campo-tel').oninput = e => {
         let v = e.target.value.replace(/\D/g,"");
         v = v.replace(/^(\d{2})(\d)/g,"($1) $2").replace(/(\d)(\d{4})$/,"$1-$2");
         e.target.value = v;
     };
 
-    // --- SALVAR / EDITAR ---
-    const form = document.getElementById('main-form');
-    form.onsubmit = async (e) => {
+    // 5. SALVAR / EDITAR
+    document.getElementById('meu-form').onsubmit = async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-id').value;
         const info = {
-            nome: document.getElementById('f-nome').value,
-            cpf: document.getElementById('f-cpf').value,
-            telefone: document.getElementById('f-tel').value,
-            procedimento: document.getElementById('f-proc').value,
-            observacoes: document.getElementById('f-obs').value,
-            status: document.getElementById('f-status').value,
+            nome: document.getElementById('campo-nome').value,
+            cpf: document.getElementById('campo-cpf').value,
+            telefone: document.getElementById('campo-tel').value,
+            procedimento: document.getElementById('campo-proc').value,
+            observacoes: document.getElementById('campo-obs').value,
+            status: document.getElementById('campo-status').value,
             data: new Date()
         };
 
         try {
-            if (id) {
+            if(id) {
                 await updateDoc(doc(db, "fichas", id), info);
-                alert("Alterações salvas com sucesso!");
+                alert("Atualizado!");
             } else {
                 await addDoc(collection(db, "fichas"), info);
-                alert("Paciente cadastrado!");
+                alert("Salvo!");
             }
-            limparForm();
-            btnList.click(); // Vai para a lista após salvar
-        } catch (err) { alert("Erro ao salvar: " + err.message); }
+            limparEVoltar();
+            trocarAba('listagem');
+        } catch (err) { alert("Erro ao salvar."); }
     };
 
-    function limparForm() {
-        form.reset();
+    window.limparEVoltar = () => {
+        document.getElementById('meu-form').reset();
         document.getElementById('edit-id').value = "";
-        document.getElementById('form-title').innerText = "Cadastrar Novo Paciente";
-        document.getElementById('btn-submit').innerText = "Salvar Ficha";
-        document.getElementById('btn-cancel').style.display = "none";
-    }
-    document.getElementById('btn-cancel').onclick = limparForm;
+        document.getElementById('titulo-form').innerText = "Nova Ficha";
+        document.getElementById('btn-salvar').innerText = "SALVAR FICHA";
+        document.getElementById('btn-cancelar').style.display = "none";
+    };
 
-    // --- CARREGAR DADOS ---
-    const q = query(collection(db, "fichas"), orderBy("data", "desc"));
-    onSnapshot(q, (snapshot) => {
-        dadosLocais = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        render(dadosLocais);
+    // 6. LER DADOS
+    onSnapshot(query(collection(db, "fichas"), orderBy("data", "desc")), (snap) => {
+        dadosCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderizar(dadosCache);
     });
 
-    function render(lista) {
-        const container = document.getElementById('display-list');
-        container.innerHTML = "";
-        
-        lista.forEach(doc => {
-            const div = document.createElement('div');
-            div.className = 'protocol-item';
-            div.innerHTML = `
+    function renderizar(lista) {
+        const divLista = document.getElementById('lista-fichas');
+        divLista.innerHTML = "";
+        document.getElementById('contagem').innerText = dadosCache.length;
+
+        lista.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'cartao-ficha';
+            row.innerHTML = `
                 <div>
-                    <span class="badge status-${doc.status}">${doc.status}</span><br>
-                    <strong style="font-size: 18px;">${doc.nome}</strong><br>
-                    <small>CPF: ${doc.cpf} | Proc: ${doc.procedimento}</small>
+                    <span class="status status-${item.status}">${item.status}</span><br>
+                    <strong>${item.nome}</strong><br>
+                    <small>${item.cpf}</small>
                 </div>
-                <div class="actions">
-                    <button class="btn-view" onclick="ver('${doc.id}')">👁️</button>
-                    <button class="btn-edit" onclick="prepararEdicao('${doc.id}')">✏️</button>
-                    <button class="btn-del" onclick="apagar('${doc.id}')">🗑️</button>
+                <div>
+                    <button class="btn-acao btn-ver" onclick="ver('${item.id}')">👁️</button>
+                    <button class="btn-acao btn-editar" onclick="prepararEdicao('${item.id}')">✏️</button>
+                    <button class="btn-acao btn-excluir" onclick="apagar('${item.id}')">🗑️</button>
                 </div>
             `;
-            container.appendChild(div);
+            divLista.appendChild(row);
         });
-
-        document.getElementById('count-total').innerText = dadosLocais.length;
-        document.getElementById('count-filtered').innerText = lista.length;
     }
 
-    // --- BUSCA ---
-    document.getElementById('search-box').oninput = (e) => {
-        const termo = e.target.value.toLowerCase();
-        const filtrados = dadosLocais.filter(d => 
-            d.nome.toLowerCase().includes(termo) || d.cpf.includes(termo)
-        );
-        render(filtrados);
-    };
-
-    // --- FUNÇÕES GLOBAIS (PARA OS BOTÕES) ---
+    // 7. FUNÇÕES DOS BOTÕES (LIGADAS AO WINDOW)
     window.prepararEdicao = (id) => {
-        const d = dadosLocais.find(item => item.id === id);
-        if(!d) return;
-
+        const d = dadosCache.find(x => x.id === id);
         document.getElementById('edit-id').value = d.id;
-        document.getElementById('f-nome').value = d.nome;
-        document.getElementById('f-cpf').value = d.cpf;
-        document.getElementById('f-tel').value = d.telefone;
-        document.getElementById('f-proc').value = d.procedimento;
-        document.getElementById('f-obs').value = d.observacoes;
-        document.getElementById('f-status').value = d.status;
+        document.getElementById('campo-nome').value = d.nome;
+        document.getElementById('campo-cpf').value = d.cpf;
+        document.getElementById('campo-tel').value = d.telefone;
+        document.getElementById('campo-proc').value = d.procedimento;
+        document.getElementById('campo-obs').value = d.observacoes;
+        document.getElementById('campo-status').value = d.status;
 
-        document.getElementById('form-title').innerText = "Editando Registro";
-        document.getElementById('btn-submit').innerText = "Atualizar Ficha";
-        document.getElementById('btn-cancel').style.display = "block";
-        
-        btnForm.click(); // Volta para a aba do formulário
+        document.getElementById('titulo-form').innerText = "Editando Registro";
+        document.getElementById('btn-salvar').innerText = "ATUALIZAR DADOS";
+        document.getElementById('btn-cancelar').style.display = "block";
+        trocarAba('cadastro');
     };
 
     window.ver = (id) => {
-        const d = dadosLocais.find(item => item.id === id);
-        alert(`PACIENTE: ${d.nome}\nCPF: ${d.cpf}\nTEL: ${d.telefone}\nSTATUS: ${d.status.toUpperCase()}\nPROCEDIMENTO: ${d.procedimento}\nOBS: ${d.observacoes}`);
+        const d = dadosCache.find(x => x.id === id);
+        alert(`PACIENTE: ${d.nome}\nCPF: ${d.cpf}\nTEL: ${d.telefone}\nSTATUS: ${d.status}\nPROCEDIMENTO: ${d.procedimento}\n\nOBSERVAÇÕES: ${d.observacoes}`);
     };
 
     window.apagar = async (id) => {
-        if (confirm("Tem certeza que deseja excluir esta ficha?")) {
+        if(confirm("Excluir esta ficha permanentemente?")) {
             await deleteDoc(doc(db, "fichas", id));
         }
+    };
+
+    document.getElementById('busca').oninput = e => {
+        const termo = e.target.value.toLowerCase();
+        renderizar(dadosCache.filter(d => d.nome.toLowerCase().includes(termo) || d.cpf.includes(termo)));
     };
 
 </script>
