@@ -16,3 +16,16 @@ tabList.addEventListener('click', () => {
   listSection.classList.add('active-tab');
   formSection.classList.remove('active-tab');
 });
+ocument.getElementById('tab-form').onclick = () => {
+        document.getElementById('form-section').classList.add('active-tab');
+        document.getElementById('list-section').classList.remove('active-tab');
+        document.getElementById('tab-form').classList.add('active');
+        document.getElementById('tab-list').classList.remove('active');
+      };
+
+      document.getElementById('tab-list').onclick = () => {
+        document.getElementById('list-section').classList.add('active-tab');
+        document.getElementById('form-section').classList.remove('active-tab');
+        document.getElementById('tab-list').classList.add('active');
+        document.getElementById('tab-form').classList.remove('active');
+      };
